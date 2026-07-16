@@ -1,0 +1,126 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() &&
+        request.auth.token.role == "super_admin";
+    }
+
+    function isGymAdmin() {
+      return isAuthenticated() &&
+        request.auth.token.role == "gym_admin";
+    }
+
+    function isMember() {
+      return isAuthenticated() &&
+        request.auth.token.role == "member";
+    }
+
+    function isGymAdminOfGym(gymId) {
+      return isGymAdmin() &&
+        request.auth.token.gymId == gymId;
+    }
+
+    function isMemberOfGym(gymId) {
+      return isMember() &&
+        request.auth.token.gymId == gymId;
+    }
+
+    match /gyms/{gymId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+      allow update: if isGymAdminOfGym(gymId) &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['homeLayoutSelection', 'customHomeLayout', 'homeLayoutUpdatedAt']);
+    }
+
+    match /users/{uid} {
+      allow read: if isSuperAdmin() ||
+        isGymAdmin() ||
+        request.auth.uid == uid;
+      allow write: if isSuperAdmin() ||
+        request.auth.uid == uid;
+    }
+
+    match /user_profiles/{idNumber} {
+      allow read: if true;
+      allow write: if isSuperAdmin() ||
+        isGymAdmin() ||
+        isMember();
+
+      match /gym_routines/{gymId} {
+        allow read, write: if isSuperAdmin() ||
+          isGymAdmin() ||
+          isMember();
+      }
+    }
+
+    match /user_training_history/{sessionId} {
+      allow read: if isSuperAdmin() ||
+        isGymAdmin();
+      allow write: if isSuperAdmin() ||
+        isMember();
+    }
+
+    match /gym_stories/{storyId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin() ||
+        isGymAdmin();
+
+      match /likes/{uid} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() &&
+          request.auth.uid == uid;
+      }
+    }
+
+    match /gym_notices/{noticeId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin() ||
+        isGymAdmin();
+    }
+
+    match /gym_routine_templates/{templateId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin() ||
+        isGymAdmin();
+    }
+
+    match /routines/{routineId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin() ||
+        isGymAdmin();
+    }
+
+    match /muscle_catalog/{muscleId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /gym_polls/{pollId} {
+      allow read: if isAuthenticated();
+      allow create, delete: if isSuperAdmin() || isGymAdmin();
+      allow update: if isAuthenticated();
+    }
+
+    match /gym_attendance/{attendanceId} {
+      allow read: if isSuperAdmin() || isGymAdmin();
+      allow write: if true;
+    }
+
+    match /layout_templates/{templateId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isSuperAdmin();
+      allow delete: if isSuperAdmin() && templateId != "default";
+    }
+
+    match /app_config/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+  }
+}

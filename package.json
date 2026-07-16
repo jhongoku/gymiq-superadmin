@@ -1,0 +1,25 @@
+{
+  "name": "gymiq-superadmin",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "*",
+    "firebase-admin": "^14.1.0",
+    "qrcode.react": "*",
+    "react": "*",
+    "react-dom": "*",
+    "react-router-dom": "^7.18.0",
+    "xlsx": "*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "*",
+    "playwright": "^1.61.0",
+    "vite": "*"
+  }
+}
